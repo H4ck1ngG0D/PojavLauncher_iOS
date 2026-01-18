@@ -1,18 +1,23 @@
-name: Release build
+name: Development build
 
 on:
-  workflow_dispatch
+  pull_request:
+    branches-ignore:
+      - 'l10n_main'
+    types: [opened, reopened]
+  push:
+    branches-ignore:
+      - 'l10n_main'
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Release build
+    name: Development build
     strategy:
       matrix:
         include:
           - platform: 2
             platform_name: ios
-          - platform: 3
-            platform_name: tvos
           - platform: 7
             platform_name: iossimulator
           - platform: 8
@@ -98,7 +103,7 @@ jobs:
           github_token: ${{secrets.GITHUB_TOKEN}}
           workflow: build.yml
           path: depends
-          workflow_conclusion: success
+          workflow_conclusion: completed
           allow_forks: false
           repo: PojavLauncherTeam/android-openjdk-build-multiarch
           branch: buildjre17-21
@@ -121,7 +126,7 @@ jobs:
           password: ${{ secrets.ELLIE_MINI_SECRET }}
         run: |
           export PATH=/opt/procursus/bin:/opt/homebrew/bin:$PATH
-          export RUNNER=1
+          export RUNNER=1 SLIMMED=1
           if [ "${{ matrix.platform_name }}" == "ios" ]; then
             # Build ipa and tipa for iOS
             gmake -j$(sysctl -n hw.ncpu) dsym package PLATFORM=${{ matrix.platform }}
@@ -143,8 +148,20 @@ jobs:
       - name: Upload regular tipa
         uses: actions/upload-artifact@main
         with:
-          name: net.kdt.pojavlauncher-${{ matrix.platform_name }}.tipa
+          name: net.kdt.pojavlauncher-${{ matrix.platform_name }}-trollstore.tipa
           path: artifacts/net.kdt.pojavlauncher-*-${{ matrix.platform_name }}-trollstore.tipa
+
+      - name: Upload slimmed ipa
+        uses: actions/upload-artifact@main
+        with:
+          name: net.kdt.pojavlauncher.slimmed-${{ matrix.platform_name }}.ipa
+          path: artifacts/net.kdt.pojavlauncher.slimmed-*-${{ matrix.platform_name }}.ipa
+
+      - name: Upload slimmed tipa
+        uses: actions/upload-artifact@main
+        with:
+          name: net.kdt.pojavlauncher.slimmed-${{ matrix.platform_name }}-trollstore.tipa
+          path: artifacts/net.kdt.pojavlauncher.slimmed-*-${{ matrix.platform_name }}-trollstore.tipa
 
       - name: Upload PojavLauncher.dSYM
         uses: actions/upload-artifact@main
